@@ -1,10 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { fetchChargeStations } from './services/openChargeMap';
+import { filterStations } from './utils/filterStations';
+import FilterPanel from './components/FilterPanel';
 
 function App() {
   const [stations, setStations] = useState([]);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    connector: '',
+    operator: '',
+    minPower: '',
+  });
 
   const londonPosition = [51.5072, -0.1276];
 
@@ -22,13 +29,34 @@ function App() {
     loadStations();
   }, []);
 
+  const connectorOptions = useMemo(() => {
+    const allConnectors = stations.flatMap((station) => station.connectors);
+    return [...new Set(allConnectors)].sort();
+  }, [stations]);
+
+  const operatorOptions = useMemo(() => {
+    const allOperators = stations.map((station) => station.operator);
+    return [...new Set(allOperators)].sort();
+  }, [stations]);
+
+  const filteredStations = useMemo(() => {
+    return filterStations(stations, filters);
+  }, [stations, filters]);
+
   return (
-    <div style={{ height: '100vh', width: '100%' }}>
+    <div style={{ height: '100vh', width: '100%', position: 'relative' }}>
       {error && (
         <div style={{ padding: '10px', backgroundColor: '#ffdddd' }}>
           Error: {error}
         </div>
       )}
+
+      <FilterPanel
+        filters={filters}
+        setFilters={setFilters}
+        connectorOptions={connectorOptions}
+        operatorOptions={operatorOptions}
+      />
 
       <MapContainer
         center={londonPosition}
@@ -41,7 +69,7 @@ function App() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {stations.map((station) => (
+        {filteredStations.map((station) => (
           <Marker
             key={station.id}
             position={[station.latitude, station.longitude]}
