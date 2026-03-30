@@ -1,3 +1,5 @@
+import { normaliseStation } from '../utils/normaliseStation';
+
 const API_KEY = "405819b5-00f9-4be7-8859-aca6826db1fb";
 
 export async function fetchChargeStations() {
@@ -10,5 +12,8 @@ export async function fetchChargeStations() {
   }
 
   const data = await response.json();
-  return data;
+
+  return data
+    .map(normaliseStation)
+    .filter(station => station.latitude && station.longitude);
 }

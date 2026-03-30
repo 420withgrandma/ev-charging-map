@@ -41,22 +41,20 @@ function App() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {stations.map((station) => {
-          const lat = station.AddressInfo?.Latitude;
-          const lng = station.AddressInfo?.Longitude;
-
-          if (!lat || !lng) return null;
-
-          return (
-            <Marker key={station.ID} position={[lat, lng]}>
-              <Popup>
-                <strong>{station.AddressInfo?.Title}</strong><br />
-                {station.AddressInfo?.AddressLine1}<br />
-                Operator: {station.OperatorInfo?.Title || "Unknown"}
-              </Popup>
-            </Marker>
-          );
-        })}
+        {stations.map((station) => (
+          <Marker
+            key={station.id}
+            position={[station.latitude, station.longitude]}
+          >
+            <Popup>
+              <strong>{station.title}</strong><br />
+              {station.address}<br />
+              Operator: {station.operator}<br />
+              Max Power: {station.maxPower ? `${station.maxPower} kW` : 'Unknown'}<br />
+              Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
