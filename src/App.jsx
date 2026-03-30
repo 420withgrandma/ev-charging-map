@@ -1,23 +1,35 @@
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { fetchChargeStations } from './services/openChargeMap';
 
 function App() {
   const [stations, setStations] = useState([]);
+  const [error, setError] = useState(null);
 
   const londonPosition = [51.5072, -0.1276];
 
   useEffect(() => {
-    fetch("https://api.openchargemap.io/v3/poi/?output=json&countrycode=GB&maxresults=50&key=405819b5-00f9-4be7-8859-aca6826db1fb")
-      .then(res => res.json())
-      .then(data => {
-        console.log(data);
+    async function loadStations() {
+      try {
+        const data = await fetchChargeStations();
         setStations(data);
-      })
-      .catch(err => console.error(err));
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      }
+    }
+
+    loadStations();
   }, []);
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
+      {error && (
+        <div style={{ padding: '10px', backgroundColor: '#ffdddd' }}>
+          Error: {error}
+        </div>
+      )}
+
       <MapContainer
         center={londonPosition}
         zoom={10}
@@ -45,7 +57,6 @@ function App() {
             </Marker>
           );
         })}
-
       </MapContainer>
     </div>
   );
