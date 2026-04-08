@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup , ZoomControl  } from 'react-leaflet';
 import { fetchChargeStations } from './services/openChargeMap';
 import { filterStations } from './utils/filterStations';
 import FilterPanel from './components/FilterPanel';
@@ -91,6 +91,7 @@ function App() {
         center={londonPosition}
         zoom={10}
         scrollWheelZoom={true}
+        zoomControl={false}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
@@ -98,6 +99,8 @@ function App() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+        <ZoomControl position='bottomright' />
+        
         <MarkerClusterGroup>
           {filteredStations.map((station) => (
             <Marker
@@ -109,7 +112,24 @@ function App() {
                 {station.address}<br />
                 Operator: {station.operator}<br />
                 Max Power: {station.maxPower ? `${station.maxPower} kW` : 'Unknown'}<br />
-                Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}
+                Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}<br /><br />
+
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    padding: '8px 12px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    textDecoration: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                  }}
+                >
+                  Get Directions
+                </a>
               </Popup>
             </Marker>
           ))}
