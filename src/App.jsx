@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { fetchChargeStations } from './services/openChargeMap';
 import { filterStations } from './utils/filterStations';
 import FilterPanel from './components/FilterPanel';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 
 function App() {
   const [stations, setStations] = useState([]);
@@ -58,6 +59,34 @@ function App() {
         operatorOptions={operatorOptions}
       />
 
+      <div
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: 1000,
+          background: 'white',
+          padding: '15px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          width: '200px',
+        }}
+      >
+        <h4 style={{ margin: 0 }}>Stats</h4>
+        <p>Total: {stations.length}</p>
+        <p>Showing: {filteredStations.length}</p>
+        <p>
+          Avg Power: {
+            filteredStations.length > 0
+              ? (
+                  filteredStations.reduce((sum, s) => sum + (s.maxPower || 0), 0) /
+                  filteredStations.length
+                ).toFixed(1)
+              : 0
+          } kW
+        </p>
+      </div>
+
       <MapContainer
         center={londonPosition}
         zoom={10}
@@ -69,20 +98,22 @@ function App() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {filteredStations.map((station) => (
-          <Marker
-            key={station.id}
-            position={[station.latitude, station.longitude]}
-          >
-            <Popup>
-              <strong>{station.title}</strong><br />
-              {station.address}<br />
-              Operator: {station.operator}<br />
-              Max Power: {station.maxPower ? `${station.maxPower} kW` : 'Unknown'}<br />
-              Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}
-            </Popup>
-          </Marker>
-        ))}
+        <MarkerClusterGroup>
+          {filteredStations.map((station) => (
+            <Marker
+              key={station.id}
+              position={[station.latitude, station.longitude]}
+            >
+              <Popup>
+                <strong>{station.title}</strong><br />
+                {station.address}<br />
+                Operator: {station.operator}<br />
+                Max Power: {station.maxPower ? `${station.maxPower} kW` : 'Unknown'}<br />
+                Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );
