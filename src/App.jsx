@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup , ZoomControl  } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup , ZoomControl, useMap  } from 'react-leaflet';
 import { fetchChargeStations } from './services/openChargeMap';
 import { filterStations } from './utils/filterStations';
 import FilterPanel from './components/FilterPanel';
 import MarkerClusterGroup from 'react-leaflet-cluster';
+import { geocodeLocation } from './services/geocoding';
+import { calculateDistance } from './utils/distance';
+
+function RecenterMap({ location }) {
+  const map = useMap();
+
+  if (location) {
+    map.setView([location.latitude, location.longitude], 13);
+  }
+
+  return null;
+}
 
 function App() {
   const [stations, setStations] = useState([]);
@@ -13,6 +25,11 @@ function App() {
     operator: '',
     minPower: '',
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchedLocation, setSearchedLocation] = useState(null);
+  const [searchError, setSearchError] = useState('');
+  const [nearestStations, setNearestStations] = useState([]);
 
   const londonPosition = [51.5072, -0.1276];
 
@@ -44,6 +61,36 @@ function App() {
     return filterStations(stations, filters);
   }, [stations, filters]);
 
+  async function handleLocationSearch() {
+    try {
+      setSearchError('');
+
+      const location = await geocodeLocation(searchQuery);
+      setSearchedLocation(location);
+
+      const stationsWithDistance = stations.map((station) => ({
+        ...station,
+        distance: calculateDistance(
+          location.latitude,
+          location.longitude,
+          station.latitude,
+          station.longitude
+        ),
+      }));
+
+      const sortedStations = [...stationsWithDistance].sort(
+        (a, b) => a.distance - b.distance
+      );
+
+      setNearestStations(sortedStations.slice(0, 5));
+    } catch (error) {
+      console.error(error);
+      setSearchError(error.message);
+      setSearchedLocation(null);
+      setNearestStations([]);
+    }
+  }
+
   return (
     <div style={{ height: '100vh', width: '100%', position: 'relative' }}>
       {error && (
@@ -58,6 +105,61 @@ function App() {
         connectorOptions={connectorOptions}
         operatorOptions={operatorOptions}
       />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: '180px',
+          left: '10px',
+          zIndex: 1000,
+          background: 'white',
+          padding: '15px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          width: '260px',
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Find Nearest Charger</h3>
+
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Enter postcode or area"
+          style={{ width: '100%', marginBottom: '10px' }}
+        />
+
+        <button
+          onClick={handleLocationSearch}
+          style={{ width: '100%', marginBottom: '10px' }}
+        >
+          Search
+        </button>
+
+        {searchError && (
+          <p style={{ color: 'red', margin: '5px 0' }}>{searchError}</p>
+        )}
+
+        {searchedLocation && (
+          <p style={{ margin: '5px 0', fontSize: '14px' }}>
+            <strong>Location:</strong> {searchedLocation.displayName}
+          </p>
+        )}
+
+        {nearestStations.length > 0 && (
+          <div>
+            <h4 style={{ marginBottom: '8px' }}>Nearest Stations</h4>
+            {nearestStations.map((station) => (
+              <div key={station.id}>
+                <strong>{station.title}</strong><br />
+                <span style={{ fontSize: '14px' }}>
+                  {station.distance.toFixed(2)} km away
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div
         style={{
@@ -100,7 +202,18 @@ function App() {
         />
 
         <ZoomControl position='bottomright' />
-        
+
+        <RecenterMap location={searchedLocation} />
+
+        {searchedLocation && (
+          <Marker position={[searchedLocation.latitude, searchedLocation.longitude]}>
+            <Popup>
+              <strong>Searched Location</strong><br />
+              {searchedLocation.displayName}
+            </Popup>
+          </Marker>
+        )}
+
         <MarkerClusterGroup>
           {filteredStations.map((station) => (
             <Marker
