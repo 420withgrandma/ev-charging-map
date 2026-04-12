@@ -1,13 +1,33 @@
+function getSpeedCategory(maxPower) {
+  if (maxPower === null || maxPower === undefined) {
+    return 'Unknown';
+  }
+
+  if (maxPower < 7) {
+    return 'Slow';
+  }
+
+  if (maxPower < 50) {
+    return 'Fast';
+  }
+
+  if (maxPower < 150) {
+    return 'Rapid';
+  }
+
+  return 'Ultra-rapid';
+}
+
 export function normaliseStation(station) {
   const connections = station.Connections || [];
 
   const connectorTypes = connections
-    .map(connection => connection.ConnectionType?.Title)
+    .map((connection) => connection.ConnectionType?.Title)
     .filter(Boolean);
 
   const powerValues = connections
-    .map(connection => connection.PowerKW)
-    .filter(power => typeof power === 'number');
+    .map((connection) => connection.PowerKW)
+    .filter((power) => typeof power === 'number');
 
   const maxPower =
     powerValues.length > 0 ? Math.max(...powerValues) : null;
@@ -23,6 +43,7 @@ export function normaliseStation(station) {
     operator: station.OperatorInfo?.Title || 'Unknown operator',
     connectors: connectorTypes,
     maxPower: maxPower,
+    speedCategory: getSpeedCategory(maxPower),
     numberOfPoints: station.NumberOfPoints || null,
   };
 }

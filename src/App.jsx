@@ -24,6 +24,7 @@ function App() {
     connector: '',
     operator: '',
     minPower: '',
+    speedCategory: '',
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,10 +34,13 @@ function App() {
 
   const londonPosition = [51.5072, -0.1276];
 
+  const speedCategoryOptions = ['Slow', 'Fast', 'Rapid', 'Ultra-rapid', 'Unknown'];
+
   useEffect(() => {
     async function loadStations() {
       try {
         const data = await fetchChargeStations();
+        console.log(data[0]);
         setStations(data);
       } catch (err) {
         console.error(err);
@@ -60,6 +64,22 @@ function App() {
   const filteredStations = useMemo(() => {
     return filterStations(stations, filters);
   }, [stations, filters]);
+
+  const displayedStations = useMemo(() => {
+  if (!searchedLocation) {
+    return filteredStations;
+  }
+
+  return filteredStations.map((station) => ({
+    ...station,
+    distance: calculateDistance(
+      searchedLocation.latitude,
+      searchedLocation.longitude,
+      station.latitude,
+      station.longitude
+    ),
+  }));
+}, [filteredStations, searchedLocation]);
 
   async function handleLocationSearch() {
     try {
@@ -104,12 +124,13 @@ function App() {
         setFilters={setFilters}
         connectorOptions={connectorOptions}
         operatorOptions={operatorOptions}
+        speedCategoryOptions={speedCategoryOptions}
       />
 
       <div
         style={{
           position: 'absolute',
-          top: '180px',
+          top: '320px',
           left: '10px',
           zIndex: 1000,
           background: 'white',
@@ -215,7 +236,7 @@ function App() {
         )}
 
         <MarkerClusterGroup>
-          {filteredStations.map((station) => (
+          {displayedStations.map((station) => (
             <Marker
               key={station.id}
               position={[station.latitude, station.longitude]}
@@ -225,7 +246,13 @@ function App() {
                 {station.address}<br />
                 Operator: {station.operator}<br />
                 Max Power: {station.maxPower ? `${station.maxPower} kW` : 'Unknown'}<br />
-                Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}<br /><br />
+                Speed: {station.speedCategory}<br />
+                Connectors: {station.connectors.length > 0 ? station.connectors.join(', ') : 'Unknown'}<br />
+                {station.distance !== undefined && (
+                  <>
+                    Distance: {station.distance.toFixed(2)} km<br />
+                  </>
+                )}<br /><br />
 
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`}

@@ -12,6 +12,15 @@ export function filterStations(stations, filters) {
       !filters.minPower ||
       (station.maxPower !== null && station.maxPower >= Number(filters.minPower));
 
-    return matchesConnector && matchesOperator && matchesPower;
+    const matchesSpeedCategory =
+      !filters.speedCategory ||
+      station.speedCategory === filters.speedCategory;
+
+    return (
+      matchesConnector &&
+      matchesOperator &&
+      matchesPower &&
+      matchesSpeedCategory
+    );
   });
 }

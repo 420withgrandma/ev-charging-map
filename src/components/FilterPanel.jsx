@@ -3,6 +3,7 @@ function FilterPanel({
   setFilters,
   connectorOptions,
   operatorOptions,
+  speedCategoryOptions,
 }) {
   return (
     <div
@@ -57,6 +58,24 @@ function FilterPanel({
       </div>
 
       <div style={{ marginBottom: '10px' }}>
+        <label>Speed Category</label>
+        <select
+            value={filters.speedCategory}
+            onChange={(e) =>
+            setFilters({ ...filters, speedCategory: e.target.value })
+            }
+            style={{ width: '100%', marginTop: '5px' }}
+        >
+            <option value="">All</option>
+            {speedCategoryOptions.map((category) => (
+            <option key={category} value={category}>
+                {category}
+            </option>
+            ))}
+        </select>
+        </div>
+
+      <div style={{ marginBottom: '10px' }}>
         <label>Minimum Power (kW)</label>
         <input
           type="number"
@@ -75,6 +94,7 @@ function FilterPanel({
             connector: '',
             operator: '',
             minPower: '',
+            speedCategory: '',
           })
         }
         style={{ width: '100%' }}
